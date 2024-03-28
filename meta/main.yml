@@ -1,0 +1,14 @@
+galaxy_info:
+  author: Asteriosoft DevOps Team
+  description: Hashicorp Vault deployment
+  company: Asteriosoft
+
+  license: MIT
+
+  min_ansible_version: 2.3
+
+  galaxy_tags: []
+
+dependencies: []
+
+

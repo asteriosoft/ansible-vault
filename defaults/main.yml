@@ -1,0 +1,22 @@
+---
+vault_cluster_name: "vault-cluster"
+
+# For AWS
+#vault_ip: "{{ private_ip_address }}"
+#vault_aws_auto_unseal:
+#  region: "us-east-1"
+#  kms_key_id: "key-id"
+
+# For GCP
+#vault_ip: "{{ private_ip }}"
+#vault_node_id: "{{ labels.node_id }}"
+#vault_gcp_auto_unseal:
+#  project: "gcp-project-name"
+#  keyring_name: "keyring-name"
+#  keyring_region: "europe-west2"
+#  key_name: "vault-key"
+
+# Default
+vault_ip: "127.0.0.1"
+vault_node_id: "{{ play_hosts.index(inventory_hostname) + 1 }}"
+

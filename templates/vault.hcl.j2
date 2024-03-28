@@ -1,0 +1,76 @@
+# Full configuration options can be found at https://www.vaultproject.io/docs/configuration
+
+ui = true
+api_addr = "http://{{ vault_ip }}:8200"
+cluster_addr = "https://{{ vault_ip }}:8201"
+cluster_name = "{{ vault_cluster_name }}"
+disable_mlock = true
+
+# Logging
+log_file = "/var/log/vault/"
+log_level = "info"
+log_rotate_duration = "168h"
+log_rotate_bytes = "10485760"
+log_rotate_max_files = "8"
+
+# HA raft storage
+storage "raft" {
+  path    = "/opt/vault/data/"
+  node_id = "vault_{{ vault_node_id }}"
+{% for host in play_hosts %}
+  retry_join {
+    leader_api_addr = "http://{{ hostvars[host].vault_ip }}:8200"
+  }
+{% endfor %}
+}
+
+# HTTP listeners
+listener "tcp" {
+  address = "127.0.0.1:8200"
+  tls_disable = 1
+  telemetry {
+    unauthenticated_metrics_access = true
+  }
+}
+
+listener "tcp" {
+  address = "{{ vault_ip }}:8200"
+  cluster_address = "{{ vault_ip }}:8201"
+  tls_disable = 1
+}
+
+listener "tcp" {
+  address = "{{ vault_ip }}:8202"
+  tls_disable = 1
+  telemetry {
+    unauthenticated_metrics_access = true
+  }
+}
+
+{% if vault_aws_auto_unseal is defined %}
+# AWS KMS auto unseal
+seal "awskms" {
+  region     = "{{ vault_aws_auto_unseal.region }}"
+  kms_key_id = "{{ vault_aws_auto_unseal.kms_key_id }}"
+}
+{% endif %}
+{% if vault_gcp_auto_unseal is defined %}
+# GCP KMS auto unseal
+seal "gcpckms" {
+  project     = "{{ vault_gcp_auto_unseal.project }}"
+  region      = "{{ vault_gcp_auto_unseal.keyring_region }}"
+  key_ring    = "{{ vault_gcp_auto_unseal.keyring_name }}"
+  crypto_key  = "{{ vault_gcp_auto_unseal.key_name }}"
+}
+{% endif %}
+
+user_lockout "all" {
+  lockout_threshold = "3"
+  lockout_duration = "15m"
+  lockout_counter_reset = "15m"
+}
+
+telemetry {
+  prometheus_retention_time = "30s"
+  disable_hostname = true
+}

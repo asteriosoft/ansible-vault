@@ -1,0 +1,79 @@
+---
+- name: Set hostvars
+  set_fact:
+    vault_ip: "{{ vault_ip }}"
+    vault_node_id: "{{ vault_node_id }}"
+
+- name: Add an apt signing key to a specific keyring file
+  apt_key:
+    url: https://apt.releases.hashicorp.com/gpg
+    keyring: /usr/share/keyrings/hashicorp-archive-keyring.gpg
+
+- name: Add hashicorp repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com {{ansible_distribution_release}} main"
+    state: present
+    update_cache: yes
+
+- name: Install vault and necessary tools
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - vault
+    - jq
+
+- name: Create vault log directory
+  file:
+    path: "/var/log/vault"
+    state: directory
+    owner: vault
+    group: vault
+
+- name: Copy vault config
+  template:
+    src: "vault.hcl.j2"
+    dest: "/etc/vault.d/vault.hcl"
+  notify:
+    - restart vault
+
+- name: Start vault
+  systemd:
+    name: vault
+    state: started
+    enabled: yes
+    daemon_reload: yes
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Wait for vault started
+  wait_for:
+    port: "8200"
+    delay: 2
+    timeout: 10
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: Check if volt is initialized
+  shell: |
+    vault status -address=http://127.0.0.1:8200 -format=json | jq -r .initialized
+  register: vault_status
+  run_once: true
+
+- name: initialize the vault
+  shell: |
+    INIT_RESPONSE=$(vault operator init -address=http://127.0.0.1:8200 -format=json -recovery-shares=1 -recovery-threshold=1)
+    RECOVERY_KEY=$(echo "$INIT_RESPONSE" | jq -r .recovery_keys_b64[0])
+    VAULT_TOKEN=$(echo "$INIT_RESPONSE" | jq -r .root_token)
+    printf "\n%s" \
+      "************************************************" \
+      "Save these values, they will only be shown once!" \
+      "Recovery key: $RECOVERY_KEY" \
+      "Root token: $VAULT_TOKEN" \
+      "************************************************"
+  register: vault_init
+  when: 
+    - vault_status.stdout == "false"
+
+- name: print vault init keys and token
+  debug: var=vault_init.stdout_lines
+  when: 
+    - vault_status.stdout == "false"
