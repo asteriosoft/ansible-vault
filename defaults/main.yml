@@ -3,6 +3,7 @@ vault_cluster_name: "vault-cluster"
 
 # For AWS
 #vault_ip: "{{ private_ip_address }}"
+#vault_node_id: "{{ tags.node_id }}"
 #vault_aws_auto_unseal:
 #  region: "us-east-1"
 #  kms_key_id: "key-id"

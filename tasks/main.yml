@@ -52,13 +52,13 @@
     timeout: 10
   ignore_errors: "{{ ansible_check_mode }}"
 
-- name: Check if volt is initialized
+- name: Check if vault is initialized
   shell: |
     vault status -address=http://127.0.0.1:8200 -format=json | jq -r .initialized
   register: vault_status
   run_once: true
 
-- name: initialize the vault
+- name: Initialize the vault
   shell: |
     INIT_RESPONSE=$(vault operator init -address=http://127.0.0.1:8200 -format=json -recovery-shares=1 -recovery-threshold=1)
     RECOVERY_KEY=$(echo "$INIT_RESPONSE" | jq -r .recovery_keys_b64[0])
@@ -73,7 +73,7 @@
   when: 
     - vault_status.stdout == "false"
 
-- name: print vault init keys and token
+- name: Print vault init keys and token
   debug: var=vault_init.stdout_lines
   when: 
     - vault_status.stdout == "false"
