@@ -70,10 +70,12 @@
       "Root token: $VAULT_TOKEN" \
       "************************************************"
   register: vault_init
+  run_once: true
   when: 
     - vault_status.stdout == "false"
 
 - name: Print vault init keys and token
   debug: var=vault_init.stdout_lines
+  run_once: true
   when: 
     - vault_status.stdout == "false"
