@@ -7,6 +7,8 @@ vault_cluster_name: "vault-cluster"
 #vault_aws_auto_unseal:
 #  region: "us-east-1"
 #  kms_key_id: "key-id"
+#  access_key = ""
+#  secret_key = ""
 
 # For GCP
 #vault_ip: "{{ private_ip }}"

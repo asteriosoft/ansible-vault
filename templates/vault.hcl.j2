@@ -52,6 +52,12 @@ listener "tcp" {
 seal "awskms" {
   region     = "{{ vault_aws_auto_unseal.region }}"
   kms_key_id = "{{ vault_aws_auto_unseal.kms_key_id }}"
+{% if vault_aws_auto_unseal.access_key is defined %}
+  access_key = "{{ vault_aws_auto_unseal.access_key }}"
+{% endif %}
+{% if vault_aws_auto_unseal.secret_key is defined %}
+  secret_key = "{{ vault_aws_auto_unseal.secret_key }}"
+{% endif %}
 }
 {% endif %}
 {% if vault_gcp_auto_unseal is defined %}
